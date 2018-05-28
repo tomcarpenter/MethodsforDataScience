@@ -1,3 +1,6 @@
+Module 2, Lab 2: *p*-values
+===========================
+
 In this lab, we will explore how the basics of null hypothesis
 significance testing work. Although you may have examined this in a
 previous course, we will review the concepts of *p*-values and tests of

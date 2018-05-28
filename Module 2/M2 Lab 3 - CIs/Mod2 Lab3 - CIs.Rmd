@@ -1,10 +1,9 @@
 ---
 title: 'Module 2, Lab 3: Confidence Intervals'
-output:
-  html_document:
-    df_print: paged
+output: md_document
 ---
 
+#Module 2, Lab 3: Confidence Intervals
 
 ```{r, echo=F}
 set.seed(51423)
