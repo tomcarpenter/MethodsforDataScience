@@ -1,0 +1,135 @@
+---
+title: 'Module 5, Lab 4 - Factorial Designs'
+output: md_document
+
+# Module 5, Lab 4 - Factorial Designs
+
+In this lab, we will explore the factorial experiment. I analyze the data from the previous lab but using a factorial design. I assume you are familiar with the between subjects lab, conducted previously. In this lab, we consider whether the three logos have different effects for males or females, a question which marketing wants to know prior to pushing the ad to different markets.  
+
+Before we begin, I will re-load the data and packages from the previous lab and score the scale. 
+
+Note that we will need two new packages for this tutorial as well. Please install the package and the `ez` package, as it contains useful ANOVA features. Please also install the `phia` package, which contains useful tools for dissecting interactions. 
+
+```{r}
+#### LOAD PACKAGES ####
+library(ggplot2)
+library(effsize)
+library(psych)
+library(ez)
+
+#### LOAD DATA ####
+dat <- read.csv("logos.csv", header=T)
+
+#### SCORE SENTIMENT SCALE ####
+dat$sentiment <- rowMeans(
+  data.frame(dat$friendly, dat$inviting, dat$interesting, dat$positive, dat$pleasant)
+)
+
+#### VIEW DATA #####
+head(dat)
+```
+
+# Vizualize the Data + Run Descriptives
+
+In a factorial design, we randomly assign a second treatment in addition to the first. For example, we could also make 50% of the logos in color and 50% in grey scale. Thus we would randomly assign people to one of the designs (3 levels: A, B, and C) and one of the colors (2 levels: color, grey scale). For this reason, this is referred to as a 2 x 3 factorial design. 
+
+One need not randomly assign the variable. One can also use a pre-existing grouping variable, such as sex. One caveat is needed, however; if the grouping variable was not randomly assigned to participants (e.g., favorite color), we cannot be sure if any observed effect is due to that variable or something else that might be causing it. For example, if participants who love the color purple tend to prefer Logo B, we don't know if that logo preference is due to the color or something else that might cause that color preference (see the discussion on prior causes in the regression lab). 
+
+In our case, we will examine a 2 (sex: male, female) x 3 (logo: A, B, C) design. Although it is true that sex was not randomly assigned by the research team to participants, biological sex is randomly assigned at birth and has no known prior causes. Thus, any differences we see between the sexes can be ultimately assumed to result from sex. 
+
+We can easily visualize our data using `ggplot2`, assigning the `fill` variable to give different colors to males and females. Remember that we had a missing value on the logo assignment for one participant, so we will tell `ggplot2` to only use rows of `dat` that are not missing on logo (`data=dat[!is.na(dat$logo),]`)
+
+
+```{r}
+ggplot(data=dat[!is.na(dat$logo), ], aes(x=logo, y=sentiment, fill=sex))+
+  geom_boxplot(alpha=.20, color="black")+
+  geom_jitter(alpha=.5, color="black", fill="grey90", width=.20)+
+  theme_light()+
+  scale_y_continuous(name="Sentiment")+
+  scale_x_discrete(name="Logo")+
+  scale_fill_discrete(name="Sex")
+```
+
+We do not see any large systematic differences in the overall levels of sentiment for males or females, nor do we see a substantively different pattern of liking across the three logos for males or females. Thus, perhaps sex does not matter much. We can pull the means out more easily with `tapply()`.
+
+Recall for `tapply()` accepts four arguments: the first is the variable to analyze, the second is a factor (or list of factors) across which we want to run the analysis, the third is the function we want to use in the analysis, and the rest are arguments to pass along to our function. In this case, we want means of `sentiment` across levels of `logo` and `sex`, with missing values ignored:
+```{r}
+# Means
+tapply(dat$friendly, list(dat$logo, dat$sex), mean, na.rm=T)
+
+# SDs
+tapply(dat$friendly, list(dat$logo, dat$sex), sd, na.rm=T)
+```
+
+Next, we can conduct the factorial ANOVA. In general, the ANOVA assesses whether:
+
+1. There are significant differences between the two sexes (similar to a one-way ANOVA or t-test)
+2. There are significant differences between the three logos (similar to a one-way ANOVA or t-test)
+3. The two variables interact
+
+I consider these three questions next. 
+
+# Example with the `ez` package: 
+
+Factorial ANOVA designs can get tricky. The best way to conduct the analysis for real-world data is to use the `ezANOVA()` command from the `ez` package. This is because you can control the "type" of the analysis done. This goes beyond the scope of this tutorial, but most experimental researchers prefer to us "type 3" analyses for ANOVA. Note that the `aov()` command we used in the previous lab only works for perfectly balanced factorial designs (equal numbers of people in every permutation of the experiment, no missing data).
+
+To use this command, you run the `ezANOVA()` command. We must specify several arguments, including the standard `data=` argument, the `type=3` argument, and a few others. 
+
+Second, we must list our variables. This is done by setting them inside `.()`. First, we have a variable called `wid=.()` that tracks the ID of each participant. If you don't have an id variable, we can easily give each participant a unique identifier with `1:nrow(dat)`, which creates a unique number for each participant. Next, we list the outcome variable as `dv`, in this case `dv=.(sentiment)`. Finally, we list our between-subjects variables using `between=.(sex, logo)`.
+
+```{r}
+#generate id variable for each subject
+dat$idvar <- 1:nrow(dat)
+
+ezANOVA(data=dat, 
+        wid=.(idvar), 
+        dv=.(sentiment), 
+        between=.(sex, logo),
+        type=3)
+```
+
+This produces a lot of output, but generally speaking, it produces the same results you would expect from the `aov()` output. There are three rows, similar to a regression output. One row, for `sex` is not significant. One row, for `logo` is significant. A third row, for `sex:logo` is not significant. 
+
+This can be interpreted as follows: 
+
+1. There is not a significant sex difference overall
+2. There are significant differences between the logos
+3. There is not a significant "interaction" between sex and logo. 
+
+Interactions can be understand as "one variable influences the effect of another." So, the sex x logo interaction is asking: "is there a different pattern of differences between the logos for males than for females?" This is not the same as asking whether males or females have different levels of sentiment. Instead, we are asking whether the effect of `logo` is different at different levels of `sex`. 
+
+You can also reverse this. This is the same as asking whether the effect of `sex` is different across the three `logos`. An interaction is essentially one variable influencing the effectiveness of another. 
+
+It's worth remembering that a non-significant effect does *not* mean that there is zero effect. We can easily see the 95% CIs for our "non-significant" effects with Tukey's HSD test (below).
+
+It turns out you cannot perform Tukey's HST test on an `ezANOVA()` object; however, you can tell `ezANOVA()` to save an `aov` object for use in Tukey's and other tests. To do this, include the `return_aov=TRUE` argument. This will save in our  output  an `aov` object that we can feed into Tukey's test and other post-hoc comparison tests. 
+
+```{r}
+mod <- ezANOVA(data=dat, 
+        wid=.(idvar), 
+        dv=.(sentiment), 
+        between=.(sex, logo),
+        type=3,
+        return_aov=TRUE)
+```
+
+From here, we can access the `aov` object with `mod$aov`. This can be thrown into Tukey's test:
+
+```{r}
+mod$aov
+
+TukeyHSD(mod$aov)
+```
+We see here that Tukey's test is returning more output than before, but we will only look at the overall logo analysis, given that nothing else was significant. We can also glance at the other analyses, specifically the confidence intervals (`lwr` and `upr` = the 95% CI). We see on many analyses that the confidence intervals are fairly large, especially toward the bottom third of the results where every individual permutation is compared against every other permutation. This tells us we may simply lack statistical power to find some effects. Power for ANOVA designs goes beyond the scope of this tutorial, but it's safe to say that large samples are desired.
+
+What if the interaction *had* been significant? That would simply tell us that at least one comparison (e.g., Logo A vs Logo B) yielded significantly different results across sexes (Male vs. Female). It could have been every logo comparison, two, or just one. To help isolate which parts of the logo pattern differ across males and females, we will use a tool called "interaction contrasts." Simply put, this technique isolates which comparisons differ across sexes, allowing the researcher to isolate where the interaction is happening. 
+
+To do this, we use the `phia` package (post-hoc interaction analysis).
+
+Next, we can use the `testInteractions()` command. We see here that it returns a list of three rows:
+
+```{r}
+library(phia)
+testInteractions(mod$aov)
+```
+The first row is listed `f-m : Logo A-Logo B`, which means we ask whether the "Logo A vs. B" comparison is *different* for males and females. We see that it is not significant (*p* = .38). None of these is significant, which does not surprise as the interaction was not significant to begin with. Truthfully, this just dissects the interaction. If the interaction was not significant to begin with, dissecting it is generally not seen as statistically responsible. 

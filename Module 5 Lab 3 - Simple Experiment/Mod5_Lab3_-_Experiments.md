@@ -311,8 +311,8 @@ Logo A and B look close together and ahead of Logo C. Of course, that is
 just in our sample, so it is unclear whether we can infer there are real
 differences in the population. For that, we need our inferential tests.
 
-Example 1: Inferential Test for Two Groups
-==========================================
+Inferential Test for Two Groups
+===============================
 
 In some experiments, you will have two groups to compare. For example,
 in the Module 3 lab on causal claims, we explored such an experiment. In
