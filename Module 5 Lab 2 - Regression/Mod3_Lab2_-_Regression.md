@@ -80,8 +80,8 @@ Let's look at the first few rows of the data:
 
 Much better.
 
-2. Regression Concepts
-======================
+Regression Concepts
+===================
 
 Recall that the purpose of regression is to predict one variable. In
 this case, let's predict `Happiness`. In regression, this is done by
