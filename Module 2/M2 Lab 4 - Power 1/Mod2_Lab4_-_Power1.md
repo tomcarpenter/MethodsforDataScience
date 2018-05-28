@@ -429,7 +429,8 @@ Wrong. Beware significant findings from under-powered studies.
 Consider a study that has very low power. In such a case, the researcher
 has almost *no* ability to find true effects.
 
-However, false positives *still happen* 5%.
+However, false positives *still happen* 5% of the time (when the null is
+true).
 
 Thus, as power gets lower, the number of "true" positives (real effects,
 discovered) goes down, while the number of false positives stays fixed.
