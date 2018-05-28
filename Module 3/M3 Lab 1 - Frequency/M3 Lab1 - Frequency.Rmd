@@ -1,0 +1,173 @@
+---
+title: "Module 3, Lab 1 - Frequency Claims"
+output: md_document
+---
+
+In this lab, we will examine how to analyze data for a frequency claim. A frequency claim is where the level of a single variable is reported. 
+
+In this example, you are analyzing data from a local coffee company. You wish to know how many coffee beverages are consumed by the average customer in a day. These customers are surveyed and the data are produced. You load the data from a CSV file (in the github folder for this lab).
+
+This lab will use the `Rmisc` package to make a confidence interval, the `ggplot2` package for plotting, and the `psych` package to test skew.
+
+```{r}
+#### LOAD PACKAGES ####
+library(psych)
+library(ggplot2)
+library(Rmisc)
+```
+
+Next, we load our data:
+
+```{r}
+#### LOAD DATA ####
+dat <- read.csv("cupsdat.csv")
+```
+
+You inspect the data:
+
+```{r}
+names(dat)
+head(dat)
+```
+
+There is an ID variable `X` and a variable indicating the number of beverages named `count`. 
+
+The first thing to do is to explore the variable. The `summary()` function has many useful features. 
+
+```{r}
+summary(dat$count)
+```
+Here we see that scores range from 0-7, with a median of 2. 
+
+# Exploring Counts
+
+We can also view a `table()` of results: 
+
+```{r}
+table(dat$count)
+```
+This gives us a sense of the distribution. I actually prefer the `as.matrix()` version of `table()`
+
+```{r}
+as.matrix(table(dat$count))
+```
+We see the possible values of `count` on the left and the observed number of each on the right. Clearly, the most common scores are 1 and 2 beverages, which makes sense. 
+
+Often, stakeholders want percentages. This is easy to accomplish, provided you know how many responses you have. The number of rows in the dataset can be returned with `nrow(dat)`:
+```{r}
+nrow(dat)
+```
+
+Or, you could ask for the `length()` of the `dat$count` variable:
+```{r}
+length(dat$count)
+```
+
+However, I would avoid these as there could be missing values. The easiest way to get the number of scores that are *not missing* is to ask for `sum(!is.na(dat$count))`. The `!is.na()` means "NOT is missing" (`!` = not, `is.na()` tests whether something is missing). 
+
+So, the percentages of each value can be given by dividing each count by the total. 
+
+```{r}
+table(dat$count) / sum(!is.na(dat$count))
+```
+These can be combined to form a nice table:
+
+```{r}
+tab1 <- cbind(
+  table(dat$count),
+  table(dat$count) / sum(!is.na(dat$count))
+)
+
+colnames(tab1) <- c("Count", "%")
+
+tab1
+```
+
+Finally, it can sometimes be helpful to generate a cumulative percentage. This can be done with `cumsum()`:
+
+```{r}
+# running total
+cumsum(table(dat$count)) 
+
+#as percent
+cumsum(table(dat$count)) / sum(!is.na(dat$count))
+
+#added to tab1
+
+tab1 <- cbind(
+  table(dat$count),
+  table(dat$count) / sum(!is.na(dat$count)),
+  cumsum(table(dat$count)) / sum(!is.na(dat$count))
+)
+
+colnames(tab1) <- c("Count", "%", "cum. %")
+
+tab1
+```
+We see here easily that 60% of the sample has consumed 2 drinks per day or fewer. This is a very handy little chart. 
+
+# Histogram
+
+The most common data visualization is a histogram:
+
+```{r}
+hist(dat$count)
+```
+
+We see here that the most common score is zero and that that data has considerable skew. However, actually, that is wrong. Looking back at the results from `table()`, the most common score was 1. Annoyingly, sometimes `hist()` combines results oddly.
+
+Assuming that you are familiar with `ggplot2`, we can use that to make a nicer histogram. We can specifically set that each bar has a width of one unit to prevent odd groupings (as above) with `binwidth`. 
+
+```{r}
+ggplot(data=dat, aes(x=count))+
+  theme_light()+
+  geom_histogram(color="black", fill="brown", binwidth=1)+
+  scale_x_continuous(name="Cups of Coffee Per Day", breaks=0:10)+
+  scale_y_continuous(name="Frequency", breaks=seq(0, 50, 5), limits=c(NA, 30))
+
+```
+
+This looks both professional and more accurate. There's a lot we can do with our `ggplot2` graph.
+
+We can also add exact counts with `geom_text(stat='count', aes(label=..count..), vjust=-1)`. To give enough room, we  should set the `limits` on the y-axis to go up to 30:
+
+```{r}
+ggplot(data=dat, aes(x=count))+
+  theme_light()+
+  geom_histogram(color="black", fill="brown", binwidth=1)+
+  geom_text(stat='count', aes(label=..count..), vjust=-1)+
+  scale_x_continuous(name="Cups of Coffee Per Day", breaks=0:10)+
+  scale_y_continuous(name="Frequency", breaks=seq(0, 50, 5), limits=c(NA, 30))
+
+```
+
+A full review of `ggplot2` is outside the scope of this tutorial, but I would encourage you to familiarize yourself with it. There are many great web tutorials and books devoted to this fantastic visualization tool.
+
+# Central Tendency
+
+Assuming you want to provide a one-number summary, you can provide an average. However, we see here given the skew that the mean will be biased upwards. 
+
+Using the `skew()` command from the `psych` package, we can see this is a modestly skewed distribution:
+
+```{r}
+skew(dat$count)
+```
+
+This is within acceptable range for many purposes (any analyses start to worry when skew reaches somewhere between 0.80-2.0). You can see the mean with `mean()` and median with `median()`:
+
+```{r}
+mean(dat$count)
+median(dat$count)
+```
+
+Before you finish, you might want to put a confidence interval around your result. You can use the `CI()` command from the `Rmisc` package, which works well for analysis when you plan to analyze the mean:
+
+```{r}
+CI(dat$count)
+```
+
+If you wished to provide a CI for a median, or if your data are proportions or some other format than these, there are many easy options that can be found with a brief web search, similar to the above. 
+
+# Conclusion
+
+In this case, we can make a frequency claim: most people, on average consume 1-2 cups of coffee per day. 
