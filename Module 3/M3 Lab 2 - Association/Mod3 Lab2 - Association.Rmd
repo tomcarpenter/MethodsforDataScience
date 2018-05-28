@@ -1,0 +1,151 @@
+---
+title: "Module 3, Lab 2 - Association"
+output: html_document
+---
+
+# Module 3, Lab 2 - Association
+
+In this lab, we will examine how to analyze data for a correlation. Note that a detailed dive into correlational and regression-based research is given in Module 5. However, a brief overview is provided here. I focus on correlation because it is the simplest way to make an association claim, but as we saw in the online lesson, actually the correct analysis depends on your data (continuous, discrete, normal vs non-normal, etc.). Thus, a full illustration of all association techniques would take many, many labs. I focus on correlation here.  
+
+In this example, you are analyzing customer loyalty data. Your organization uses three measures of loyalty, and you wish to test them out. (To avoid discussions of popular real measures, we will name these `loytalty1`, `loyalty2`, and `loyalty3`). 
+
+Note that this lab uses the `ggplot2` package for data visualization and the `psych` package for correlation testing. I also assume you are familiar with `ggplot2`. As an alternative to the `psych` tools, we can also use the `Hmisc` package for correlation testing.
+
+```{r}
+#### LOAD PACKAGES ####
+library(psych)
+library(ggplot2)
+library(Hmisc)
+```
+
+
+You load the data from the CSV file in the github folder for this lab:
+
+```{r}
+#### LOAD DATA ####
+dat <- read.csv("loyaltydata.csv")
+```
+
+You inspect the data:
+
+```{r}
+names(dat)
+head(dat)
+```
+
+There is an ID variable `X` and scores on a loyalty measures named `loyalty1` through `loyalty3`. Note that you are not familiar with the scaling of these measures. 
+
+The first thing to do is to explore the variables. The `summary()` function has many useful features. 
+
+```{r}
+summary(dat)
+```
+This gives you a sense as to the range and scaling of each loyalty measure. 
+
+Imagine that each loyalty measure was in common use. You might want to know whether they are highly correlated. We can compute correlations between variables with `cor()`, removing the first variable (the ID variable):
+
+```{r}
+cor(dat[,-1])
+```
+
+This difficult to read. Let's `round()` this:
+
+```{r}
+round(cor(dat[,-1]), 2)
+```
+We see here that the variables are *not* highly correlated with each other. This is a potential problem. 
+
+A brief refresher: correlations range between zero (no association between variables) and 1.0 (a one-to-one association). They can also be positive (as one variable increases, so does the other) or negative (as one variable increases, the other decreases). 
+
+The statistician Jacob Cohen suggested the following guidelines: 
+
+```{r, echo=FALSE}
+data.frame(correlation=c("0.0 - 0.1",
+               "0.1 - 0.3",
+               "0.3 - 0.5",
+               "0.5 + "),
+           meaning=c("Negligible", "Small", "Medium", "Large"))
+```
+
+However, given that they are all ostensibly measuring the same thing, loyalty, we should expect much higher correlations (.7-.9). 
+
+We can also easily visualize this correlation with `ggplot2`. I will use `geom_jitter()` to make the points more visible and make them partly transparent by setting `alpha=.5`:
+
+```{r}
+ggplot(data=dat, aes(x=loyalty1, y=loyalty2))+
+  geom_jitter(alpha=.5)+
+  theme_light()
+
+ggplot(data=dat, aes(x=loyalty1, y=loyalty3))+
+  geom_jitter(alpha=.5)+
+  theme_light()
+
+ggplot(data=dat, aes(x=loyalty2, y=loyalty3))+
+  geom_jitter(alpha=.5)+
+  theme_light()
+```
+All of the graphs look about the same. It is always good to inspect the plots, as we know that non-linearity can weaken our correlations. Here, we see evidence that each measure is correlated linearly; the associations are simply underwhelming.
+
+Note that we can make a plot of these scatter plots as follows: 
+
+```{r}
+plot(dat[,-1])
+```
+
+We can easily get *p*-values for these correlations (to determine if they are statistically significant) using the `corr.test()` command in the `psych` package:
+```{r}
+corr.test(dat[,-1])
+```
+
+In this case, *p* values appear in the bottom matrix. In this case, all results are significant. 
+
+You can also produce confidence intervals using the `rcorr()` function from the `Hmisc` package. This accepts as an input, a `matrix` form of your data.
+
+```{r}
+rcorr(as.matrix(dat[,-1]))
+```
+
+Note that there are many ways of visualizing these associations. We will explore the production of a full study using correlations later, in Module 5.
+
+#### cor.test()
+
+If you want a 95% CI for any of these correlations, you can can use `cor.test()` (this is from base R ... this is **not** `corr.test()` from the `psych` package) on a pair of variables:
+
+```{r}
+cor.test(dat$loyalty1, dat$loyalty2)
+```
+
+Here, we see we are 95% confident that the correlation in the population is between .34 and .45. We can save this and extract it if we want:
+
+```{r}
+cor1 <- cor.test(dat$loyalty1, dat$loyalty2)
+```
+There is a lot you can get in this analysis. Any time you save the results from an analysis in R, try using `names()` to see what it contains that you can extract:
+
+```{r}
+names(cor1)
+```
+Each of these can be extracted with `$`. For example, we an extract the CI with:
+
+```{r}
+cor1$conf.int
+```
+From here, we can even extract the individual levels with:
+
+```{r}
+cor1$conf.int[1]
+
+cor1$conf.int[2]
+```
+This is a very handy tool, because it means we can write code to grab these values and use them (e.g., to make tables or plots as we desire). 
+
+One other handy feature of `cor.test()`: you can use an alternative form of the correlation, "Spearman's correlation", if the data are too non-normal. For example:
+
+```{r}
+cor.test(dat$loyalty1, dat$loyalty2, method="spearman")
+```
+ We see it makes virtually no difference here, but if our data were too skewed to use a standard correlation, this provides an acceptable backup option for us. 
+
+# What Claims Can We Make?
+
+Here, we can make the following claims: each of these variables is correlated with each other, but in reality, the correlations are weaker than you would hope them to be. In this case, we can have a series of conversations about whether these measures of loyalty are assessing different things, whether there are actually different kinds of customer loyalty, or whether the measures are not of high quality. Regardless, there appears to *not* be a large association between our measures of loyalty. In fact, using 95% CIs, we found that we had fairly precise estimate of our correlations: they are not strong. This raises large implications for our organization as it considers using these measures. 

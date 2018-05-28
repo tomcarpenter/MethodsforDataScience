@@ -319,6 +319,11 @@ are familiar with `ggplot2` to run this code:
 
 ![](Mod2_Lab4_-_Power1_files/figure-markdown_strict/unnamed-chunk-12-1.png)
 
+(A full review of ggplot2 is outside the scope of this tutorial, but I
+would encourage you to familiarize yourself with it. There are many
+great web tutorials and books devoted to this fantastic visualization
+tool.)
+
 You can modify the above code for different sample sizes and ranges, but
 the rest stays the same. You can easily see with the graph that 80%
 power (red dashed line) would take 180 participants per group for a *d*
