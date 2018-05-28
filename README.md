@@ -1,2 +1,3 @@
 # MethodsforDataScience
-A brief series of research and stats R labs for total beginners to accompany our online course
+
+This is a series of R-based labs to accompany the Research Methods for Data Science online course. 
