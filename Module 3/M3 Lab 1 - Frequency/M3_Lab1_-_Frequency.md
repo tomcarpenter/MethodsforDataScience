@@ -1,3 +1,6 @@
+Module 3, Lab 1 - Frequency Claims
+==================================
+
 In this lab, we will examine how to analyze data for a frequency claim.
 A frequency claim is where the level of a single variable is reported.
 

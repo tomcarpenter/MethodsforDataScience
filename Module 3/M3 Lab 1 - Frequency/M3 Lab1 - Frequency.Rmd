@@ -3,6 +3,8 @@ title: "Module 3, Lab 1 - Frequency Claims"
 output: md_document
 ---
 
+#Module 3, Lab 1 - Frequency Claims
+
 In this lab, we will examine how to analyze data for a frequency claim. A frequency claim is where the level of a single variable is reported. 
 
 In this example, you are analyzing data from a local coffee company. You wish to know how many coffee beverages are consumed by the average customer in a day. These customers are surveyed and the data are produced. You load the data from a CSV file (in the github folder for this lab).
