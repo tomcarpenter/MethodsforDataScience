@@ -38,7 +38,7 @@ three questions:
 3.  If they are measuring one thing, do they do so reliably and how can
     we optimize reliability?
 
-<!-- -->
+Start by loading the data:
 
     #### LOAD DATA ####
     dat <- read.csv("measurement.csv")
@@ -62,9 +62,8 @@ Next, we should check the data:
     ##  3rd Qu.:10.00   3rd Qu.: 9.167  
     ##  Max.   :10.00   Max.   :10.000
 
-The question before us is whether these five adjectives reliably form a
-single index of anything, and if they do, whether that thing is
-sentiment.
+The immediate question before us is whether these five adjectives
+reliably form a single index of anything.
 
 The first task is to check the correlations among the items. To make the
 code easier, we can briefly drop the `id` variable. All of the commands
@@ -89,27 +88,29 @@ Next, we can run `cor()` on the measures:
     ## pleasant     0.81     0.64    0.64   0.27     1.00
 
 We see here that most of the items are strongly inter-correlated, except
-for quirky. This question doesn't' seem to fit with the others. We may
-flag this as a possible poor-fitting item.
+for `quirky`. This question doesn't' seem to fit with the others. We may
+flag this as a possible odd item.
 
 One Dimension?
 ==============
 
 We can break down the reliability test into two stages. In the first
 stage, we can ask whether we are measuring "one thing" or several things
-with this set of questions.
+with this set of questions. *After all, you cannot have a reliable
+measure of something unless you know you are measuring one thing to
+begin with.* Although many people skip this step, I illustrate it here.
 
 A factor analysis (similar to a "principal component analysis," which
 you will learn later) can tell us how many underlying dimensions appear
 to be operating beneath this set of variables. For example, if I asked
-someone feeling upset if they feel "upset," "mad," and "angry" ... I
+someone feeling angry if they feel "upset," "mad," and "angry" ... I
 would likely get similar answers because these questions are all
-assessing the **one** underlying variable of anger. There does not
+assessing the **one** underlying dimension of anger. There does not
 appear to be a separate dimension beneath those items (we call questions
 "items" in survey writing). Similarly, we need to know if this set of
-questions we have asked is represents one underlying dimension or
-several. We call these underlying dimensions "factors." Thus, we need to
-know how many we have.
+questions we have asked represents one underlying dimension or several.
+We call these underlying dimensions "factors." Thus, we need to know how
+many factors we have.
 
 I won't explain the details of factor analysis here (beyond the scope of
 this course), but it essentially analyzes the patterns of association
@@ -127,9 +128,9 @@ questions measured 3 underlying dimensions.
 
 Modern techniques involve a "parallel analysis," in which the computer
 generates random data (based on your data) but with *no* underlying
-factors. Where the results from your data differ from the results of the
-simulated data, you have evidence for a factor. We count the number of
-times that occurs, and that is the number of factors you have.
+factors. Where your data differ from the simulated data, you have
+evidence for a factor. We count the number of times that occurs, and
+that is the number of factors you have.
 
     fa.parallel(dat, fm = 'minres', fa = 'fa')
 
@@ -141,8 +142,8 @@ The computer here is telling you that we see evidence for one factor.
 This is supported by the graph. The red lines in the graph represent the
 results from the random computer-generated data, whereas the blue line
 represents your data. We see that, in the column labeled "Factor Number
-1," the blue line and red line diverge--evidence for a factor! Further,
-the "eigenvalue" for that column is above 1.0" (height of blue triangle
+1," the blue line and red lines diverge--evidence for a factor! Further,
+the "eigenvalue" for that column is above 1.0 (height of blue triangle
 on the y-axis).
 
 For the remaining columns on the graph, we see that our data (blue line)
@@ -151,20 +152,21 @@ we have no evidence for any additional factors. Therefore, we can
 conclude that we have one underlying dimension to our data. This means
 we are measuring "one thing" with this set of questions.
 
-Next, we can consider whether our items correlate with the "one
-underlying dimension." A good question is conceptually close to the
-underlying dimension and therefore does not "pick up" on a lot of other
-junk. For example, the "quirky" question has a possible negative
-connotation to it; it may inadvertently have more going on with it than
-simply assessing positive / negative sentiment.
+Next, we can can focus in on our questions and consider whether our
+items each correlate well with the "one underlying dimension." A good
+question is conceptually close to the underlying dimension and therefore
+does not "pick up" on a lot of other junk. For example, the "quirky"
+question has a possible negative connotation to it; it may inadvertently
+have more going on with it than simply assessing positive / negative
+sentiment. Thus, I would not be surprised if it fails to correlate as
+well with the underlying factor. We call these correlations "loadings."
 
-We can run a more detailed factor analysis using the `fa()` command from
-the `psych` package, specifically asking it to retrieve one factor. We
-then look at the "loadings," which are correlations between the
-underlying factor and the individual questions scores. Good questions
-should be highly correlated to our underlying dimension. In general, I
-would be wary of anything in the .3-.5 range or below. These loading are
-given in the column labeled `MR1`:
+We can run this more detailed factor analysis using the `fa()` command
+from the `psych` package, specifically asking it to retrieve one factor.
+We then look at the "loadings." Good questions should be highly
+correlated to our underlying dimension. In general, I would be wary of
+anything in the .3-.5 range or below. These loading are given in the
+column labeled `MR1`:
 
     fa(dat, nfactors = 1, fm="minres")$loadings
 
@@ -208,14 +210,15 @@ thing you're measuring" (i.e., due to the factor). If reliability is
 100%, then our measure is perfectly reliable and every bump in the data
 is real variation in sentiment. If reliability is less than 100%--for
 example, 80%--then most of the variation is due to the thing you are
-measuring but the remaining 20% is measurement error, or other random
-unrelated junk that you do not want to measure.
+measuring but the remaining 20% is measurement error, other random
+unrelated junk that you do not care about and is watering down your
+measure.
 
 I will point out that there are trade-offs in measurement. You can get a
 perfectly reliable measure by asking the same question several different
 ways, but that is redundant and frankly uninformative. It's worth it to
-ask questions slightly different ways (e.g., words such as "friendly"
-and "awesome" are both positive words but not identical). You add more
+ask questions slightly differently (e.g., words such as "friendly" and
+"awesome" are both positive words but not identical). You add more
 information to your measure that way, but the trade off is that
 reliability can suffer. In general, reliability between .70 and .90 is
 good, with .80-.95 preferred.
@@ -258,11 +261,11 @@ The top row gives us what we want:
 `raw_alpha`  
 `0.86`
 
-Our measure is 86% reliable, or only 14% measurement error. This row
-also tells us that the average correlation among our items is .54. Can
-we do better?
+Our measure is an estimated 86% reliable, or only 14% measurement error.
+This row also tells us that the average correlation among our items is
+.54. Can we do better?
 
-However, this included quirky. We see below the top row is the line,
+However, this included `quirky`. We see below the top row is the line,
 `Reliability if an item is dropped:` which reports that dropping
 `quirky` would actually improve our reliability to .91. This row also
 tells us that the average correlation among our questions would increase
@@ -292,4 +295,7 @@ Future Directions
 This is but a first taste of measurement development. There is an entire
 field known as "psychometrics" with many fantastic tools for measurement
 development. Good measurement is hard, but without good measurement, our
-data are misleading.
+data are wrong. Further, some cases misleading data can be worse than no
+data. Taking the time to assess the reliability and validity of measures
+is therefore vital to doing good data science whenever measures must be
+constructed.
